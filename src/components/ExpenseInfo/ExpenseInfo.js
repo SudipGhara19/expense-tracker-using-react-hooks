@@ -1,31 +1,24 @@
 import React from "react";
 import styles from "./ExpenseInfo.module.css";
 
-const ExpenseInfo = (props) => {
-  // Add logic here to calculate the grand total, profit and expense amount here
-  let grandTotal = 0;
+const ExpenseInfo = ({ expenses }) => {
   let profitAmount = 0;
-  let expenseAmount = 0;
-
-  for (const expense of props.expenses) {
-    // JSON.parse(expense.amount);
-    grandTotal = grandTotal + expense.amount;
-    
-
-
-
-    if (expense.amount > 0) {
-      profitAmount += expense.amount;
+  let lossAmount = 0;
+  const grandTotal = expenses.reduce((acc, currentExpense) => {
+    const currentExpenseAmount = parseInt(currentExpense.amount);
+    if (currentExpenseAmount < 0) {
+      lossAmount += currentExpenseAmount;
     } else {
-      expenseAmount -= expense.amount;
+      profitAmount += currentExpenseAmount;
     }
-  }
+    return currentExpenseAmount + acc;
+  }, 0);
 
   return (
     <div className={styles.expenseInfoContainer}>
       <div className={styles.balance}>
         <h4>YOUR BALANCE</h4>
-        <h1>${grandTotal}</h1>
+        <h1>${grandTotal.toFixed(2)}</h1>
       </div>
       <div className={styles.incomeExpenseContainer}>
         <div>
@@ -37,7 +30,7 @@ const ExpenseInfo = (props) => {
         <div>
           <h4>Expense</h4>
           <p id="money-minus" className={`${styles.money} ${styles.minus}`}>
-            -${expenseAmount}
+            -${lossAmount}
           </p>
         </div>
       </div>

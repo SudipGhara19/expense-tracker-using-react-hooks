@@ -1,48 +1,65 @@
-import { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import styles from "./ExpenseForm.module.css";
 
-const ExpenseForm = (props) => {
+const ExpenseForm = ({
+  addExpense,
+  expenseToUpdate,
+  updateExpense,
+  resetExpenseToUpdate
+}) => {
   const expenseTextInput = useRef();
   const expenseAmountInput = useRef();
 
+  useEffect(() => {
+    if (!expenseToUpdate) return;
+    expenseTextInput.current.value = expenseToUpdate.text;
+    expenseAmountInput.current.value = expenseToUpdate.amount;
+  }, [expenseToUpdate]);
+
   const onSubmitHandler = (e) => {
     e.preventDefault();
-    // Logic to add expense here
-
-    const enteredText = expenseTextInput.current.value;
-    const enteredAmount = expenseAmountInput.current.value;
-
-    if(enteredText.trim().length === 0 || enteredAmount === 0){
+    const expenseText = expenseTextInput.current.value;
+    const expenseAmount = expenseAmountInput.current.value;
+    if (parseInt(expenseAmount) === 0) {
+      return;
+    }
+    if (!expenseToUpdate) {
+      const expense = {
+        text: expenseText,
+        amount: expenseAmount
+      };
+      addExpense(expense);
+      clearInput();
       return;
     }
 
-    //creating new expence
-    const newExpense = {
-      id: new Date().getTime(),
-      text: enteredText,
-      amount: +enteredAmount
-    }
+    const expense = {
+      text: expenseText,
+      amount: expenseAmount,
+      id: expenseToUpdate.id
+    };
 
-    //adding the new expence and store it in the array
-    props.onAddExpense(newExpense);
+    const result = updateExpense(expense);
+    if (!result) return;
+    clearInput();
+    resetExpenseToUpdate();
+  };
 
-    //clearing the input fields
-    expenseTextInput.current.value = "";
+  const clearInput = () => {
     expenseAmountInput.current.value = "";
-
-
+    expenseTextInput.current.value = "";
   };
 
   return (
     <form className={styles.form} onSubmit={onSubmitHandler}>
-      <h3>Add new transaction</h3>
+      <h3>{expenseToUpdate ? "Edit " : "Add new "}transaction</h3>
       <label htmlFor="expenseText">Text</label>
       <input
-        ref={expenseTextInput}
         id="expenseText"
         className={styles.input}
         type="text"
         placeholder="Enter text..."
+        ref={expenseTextInput}
         required
       />
       <div>
@@ -50,14 +67,16 @@ const ExpenseForm = (props) => {
         <div>(negative - expense,positive-income)</div>
       </div>
       <input
-        ref={expenseAmountInput}
         className={styles.input}
         id="expenseAmount"
         type="number"
         placeholder="Enter amount..."
+        ref={expenseAmountInput}
         required
       />
-      <button className={styles.submitBtn}>Add Transaction</button>
+      <button className={styles.submitBtn}>
+        {expenseToUpdate ? "Edit " : "Add "} Transaction
+      </button>
     </form>
   );
 };
