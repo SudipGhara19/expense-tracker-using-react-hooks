@@ -1,4 +1,4 @@
-import { useState, useReducer } from "react";
+import { useState, useReducer, useEffect } from "react";
 import "./App.css";
 
 // components imports
@@ -12,11 +12,17 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // import firebase methods here
-import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, getDocs } from "firebase/firestore";
 
 const reducer = (state, action) => {
   const { payload } = action;
   switch (action.type) {
+    // add cases to set retrived expenses to state here
+    case "SET_EXPENSES":{
+      return{
+        expenses: payload.expenses
+      }
+    }
     case "ADD_EXPENSE": {
       return {
         expenses: [payload.expense, ...state.expenses]
@@ -42,6 +48,32 @@ const reducer = (state, action) => {
 function App() {
   const [state, dispatch] = useReducer(reducer, { expenses: [] });
   const [expenseToUpdate, setExpenseToUpdate] = useState(null);
+
+  // create function to get expenses from firestore here
+  const getExpenseFromFirestore = async() => {
+    try{
+      const snapShot = await getDocs(collection(db, "expense-tracker"));
+      const expenseData = snapShot.docs.map((doc) => {
+        return{
+          id: doc.id,
+          ...doc.data()
+        }
+      });
+
+      dispatch({
+        type: "SET_EXPENSES",
+        payload: {expenses: expenseData}
+      });
+    }catch(error){
+      console.error("Error in fetching expenses from firestore", error.message)
+    }
+  };
+
+
+  // use appropriate hook to get the expenses when app mounts
+  useEffect(() => {
+    getExpenseFromFirestore();
+  },[]);
 
   const addExpense = async (expense) => {
     // add expense to firestore here
