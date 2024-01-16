@@ -12,7 +12,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // import firebase methods here
-import { collection, addDoc, doc, setDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, getDocs, onSnapshot } from "firebase/firestore";
 
 const reducer = (state, action) => {
   const { payload } = action;
@@ -51,22 +51,31 @@ function App() {
 
   // create function to get expenses from firestore here
   const getExpenseFromFirestore = async() => {
-    try{
-      const snapShot = await getDocs(collection(db, "expense-tracker"));
-      const expenseData = snapShot.docs.map((doc) => {
-        return{
-          id: doc.id,
-          ...doc.data()
-        }
-      });
+    
+      // const snapShot = await getDocs(collection(db, "expense-tracker"));
+      // const expenseData = snapShot.docs.map((doc) => {
+      //   return{
+      //     id: doc.id,
+      //     ...doc.data()
+      //   }
+      // });
 
-      dispatch({
-        type: "SET_EXPENSES",
-        payload: {expenses: expenseData}
-      });
-    }catch(error){
-      console.error("Error in fetching expenses from firestore", error.message)
-    }
+      const unsub = await onSnapshot(collection(db, "expense-tracker"), (snapshot)=> {
+        const expenseData = snapshot.docs.map((doc) => {
+          return{
+            id: doc.id,
+            ...doc.data()
+          }
+        });
+
+        dispatch({
+          type: "SET_EXPENSES",
+          payload: {expenses: expenseData}
+        });
+      })
+
+      
+    
   };
 
 
@@ -76,17 +85,11 @@ function App() {
   },[]);
 
   const addExpense = async (expense) => {
-    // add expense to firestore here
-    const docRef = await addDoc(collection(db, "expense-tracker"), {
-      text: expense.text,
-      amount: expense.amount
-    });
-
-
+    const expenseRef = collection(db, "expenses");
+    const docRef = await addDoc(expenseRef, expense);
     dispatch({
       type: "ADD_EXPENSE",
-      // add the new document id to the payload expense object below
-      payload: { expense: { ...expense, id: docRef.id } }
+      payload: { expense: { id: docRef.id, ...expense } }
     });
     toast.success("Expense added successfully.");
   };
