@@ -12,7 +12,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // import firebase methods here
-import { collection, addDoc, doc, setDoc, getDocs, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, deleteDoc } from "firebase/firestore";
 
 const reducer = (state, action) => {
   const { payload } = action;
@@ -94,7 +94,9 @@ function App() {
     toast.success("Expense added successfully.");
   };
 
-  const deleteExpense = (id) => {
+  const deleteExpense = async (id) => {
+    //delete expense from firestore
+    await deleteDoc(doc(db, "expense-tracker", id));
     dispatch({ type: "REMOVE_EXPENSE", payload: { id } });
   };
 
