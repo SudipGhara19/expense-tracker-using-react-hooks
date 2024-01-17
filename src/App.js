@@ -12,7 +12,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // import firebase methods here
-import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
 
 const reducer = (state, action) => {
   const { payload } = action;
@@ -120,6 +120,13 @@ function App() {
       text: expense.text,
       amount: expense.amount
     });
+
+    //update expense using "updateDoc"
+    await updateDoc(doc(db, "expense-tracker", expense.id),{
+      text: expense.text,
+      amount: expense.amount
+    })
+
 
     dispatch({ type: "UPDATE_EXPENSE", payload: { expensePos, expense } });
     toast.success("Expense updated successfully.");
