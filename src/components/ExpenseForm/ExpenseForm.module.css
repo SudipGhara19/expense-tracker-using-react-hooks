@@ -1,6 +1,7 @@
 .form {
-  width: 350px;
-  margin: 10px auto;
+  position: fixed;
+  left: 10rem;
+  top: 50%;
   border: 1px solid gray;
   display: flex;
   flex-direction: column;
@@ -8,6 +9,7 @@
   gap: 1rem;
   padding: 1rem;
   justify-content: center;
+  transform: translate(20%, -50%);
   border-radius: 12px;
 }
 

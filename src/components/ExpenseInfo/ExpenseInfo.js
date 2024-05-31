@@ -4,15 +4,18 @@ import styles from "./ExpenseInfo.module.css";
 const ExpenseInfo = ({ expenses }) => {
   let profitAmount = 0;
   let lossAmount = 0;
-  const grandTotal = expenses.reduce((acc, currentExpense) => {
-    const currentExpenseAmount = parseInt(currentExpense.amount);
-    if (currentExpenseAmount < 0) {
-      lossAmount += currentExpenseAmount;
-    } else {
-      profitAmount += currentExpenseAmount;
-    }
-    return currentExpenseAmount + acc;
-  }, 0);
+
+  
+    const grandTotal = expenses ? expenses.reduce((acc, currentExpense) => {
+      const currentExpenseAmount = parseInt(currentExpense.amount);
+      if (currentExpenseAmount < 0) {
+        lossAmount += currentExpenseAmount;
+      } else {
+        profitAmount += currentExpenseAmount;
+      }
+      return currentExpenseAmount + acc;
+    }, 0) : 0;
+  
 
   return (
     <div className={styles.expenseInfoContainer}>

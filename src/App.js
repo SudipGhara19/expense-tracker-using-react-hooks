@@ -1,28 +1,12 @@
-import { useState, useReducer, useEffect } from "react";
-import "./App.css";
-
-// components imports
+import { useState, useReducer } from "react";
 import ExpenseForm from "./components/ExpenseForm/ExpenseForm";
 import ExpenseInfo from "./components/ExpenseInfo/ExpenseInfo";
 import ExpenseList from "./components/ExpenseList/ExpenseList";
-import { db } from "./firebaseinit";
-
-// react toasts
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-// import firebase methods here
-import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore";
+import "./App.css";
 
 const reducer = (state, action) => {
   const { payload } = action;
   switch (action.type) {
-    // add cases to set retrived expenses to state here
-    case "SET_EXPENSES":{
-      return{
-        expenses: payload.expenses
-      }
-    }
     case "ADD_EXPENSE": {
       return {
         expenses: [payload.expense, ...state.expenses]
@@ -33,122 +17,60 @@ const reducer = (state, action) => {
         expenses: state.expenses.filter((expense) => expense.id !== payload.id)
       };
     }
+    //add logic for updating the expense here
     case "UPDATE_EXPENSE": {
-      const expensesDuplicate = state.expenses;
-      expensesDuplicate[payload.expensePos] = payload.expense;
+      const updatedExpenses =  state.expenses.map((expense)=> 
+        expense.id === payload.id ? payload.updateExpense : expense
+      );
+      
       return {
-        expenses: expensesDuplicate
-      };
+        expenses: updatedExpenses
+      }
     }
+    
     default:
       return state;
   }
 };
-
+// Use proper state management for populating the form in the expenseForm component on clicking the edit icon in the Transaction component
 function App() {
   const [state, dispatch] = useReducer(reducer, { expenses: [] });
-  const [expenseToUpdate, setExpenseToUpdate] = useState(null);
+  const [editingExpense, setEditingExpense] = useState(null);
 
-  // create function to get expenses from firestore here
-  const getExpenseFromFirestore = async() => {
-    
-      // const snapShot = await getDocs(collection(db, "expense-tracker"));
-      // const expenseData = snapShot.docs.map((doc) => {
-      //   return{
-      //     id: doc.id,
-      //     ...doc.data()
-      //   }
-      // });
-
-      const unsub = await onSnapshot(collection(db, "expense-tracker"), (snapshot)=> {
-        const expenseData = snapshot.docs.map((doc) => {
-          return{
-            id: doc.id,
-            ...doc.data()
-          }
-        });
-
-        dispatch({
-          type: "SET_EXPENSES",
-          payload: {expenses: expenseData}
-        });
-      })
-
-      
-    
+  const addExpense = (expense) => {
+    dispatch({ type: "ADD_EXPENSE", payload: { expense } });
   };
 
-
-  // use appropriate hook to get the expenses when app mounts
-  useEffect(() => {
-    getExpenseFromFirestore();
-  },[]);
-
-  const addExpense = async (expense) => {
-    const expenseRef = collection(db, "expenses");
-    const docRef = await addDoc(expenseRef, expense);
-    dispatch({
-      type: "ADD_EXPENSE",
-      payload: { expense: { id: docRef.id, ...expense } }
-    });
-    toast.success("Expense added successfully.");
-  };
-
-  const deleteExpense = async (id) => {
-    //delete expense from firestore
-    await deleteDoc(doc(db, "expense-tracker", id));
+  const deleteExpense = (id) => {
     dispatch({ type: "REMOVE_EXPENSE", payload: { id } });
   };
+  // Add dispatch function for updation
+ const updateExpense = (updateExpense) => {
+  dispatch({type: "UPDATE_EXPENSE", payload: {id: editingExpense.id, updateExpense}});
+  setEditingExpense(null);
+ }
 
-  const resetExpenseToUpdate = () => {
-    setExpenseToUpdate(null);
-  };
-
-  const updateExpense = async (expense) => {
-    const expensePos = state.expenses
-      .map(function (exp) {
-        return exp.id;
-      })
-      .indexOf(expense.id);
-
-    if (expensePos === -1) {
-      return false;
-    }
-
-    // update expense in firestore here
-    await setDoc(doc(db, "expense-tracker", expense.id), {
-      text: expense.text,
-      amount: expense.amount
-    });
-
-    //update expense using "updateDoc"
-    await updateDoc(doc(db, "expense-tracker", expense.id),{
-      text: expense.text,
-      amount: expense.amount
-    })
-
-
-    dispatch({ type: "UPDATE_EXPENSE", payload: { expensePos, expense } });
-    toast.success("Expense updated successfully.");
-  };
+ const startEditing =(expense)=> {
+    setEditingExpense(expense);
+ }
 
   return (
     <>
-      <ToastContainer />
       <h2 className="mainHeading">Expense Tracker</h2>
       <div className="App">
-        <ExpenseForm
-          addExpense={addExpense}
-          expenseToUpdate={expenseToUpdate}
-          updateExpense={updateExpense}
-          resetExpenseToUpdate={resetExpenseToUpdate}
+        <ExpenseForm 
+        addExpense={addExpense} 
+        // Pass the props for populating the form with expense text and amount
+        updateExpense={updateExpense}
+        editingExpense={editingExpense}
         />
         <div className="expenseContainer">
           <ExpenseInfo expenses={state.expenses} />
           <ExpenseList
             expenses={state.expenses}
             deleteExpense={deleteExpense}
-            changeExpenseToUpdate={setExpenseToUpdate}
+            startEditing={startEditing}
+            // Pass props to update a transacation
           />
         </div>
       </div>
